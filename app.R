@@ -1,3 +1,8 @@
+#
+#   TEST FILE
+#
+
+
 library(shiny)
 library(plotly)
 library(tidyverse)
@@ -8,11 +13,11 @@ library(magrittr)
 
 
 
-### VARIÁVEIS GLOBAIS
-
 # IBGE
 # "3512001", "4128104", "4203808", "4210001", "4212809",  "4213500"
-IBGE <- c("4210001")
+IBGE <- c("4212809")
+
+
 
 
 # saude bucal escovacoes faixa etaria
@@ -55,12 +60,13 @@ lista_UBS <- unique(saude_bucal_escovacoes$nome_unidade_saude)
 
 
 
+
+
 ui <- fluidPage(
   
   # painel de filtro
   wellPanel(tags$h4("Filtros"),
             fluidRow(
-              column(8, selectInput(inputId = "UBS", label = "Selecione UBS", choices = lista_UBS, multiple = T, selected = lista_UBS)),
               column(4, dateRangeInput("SELECTED_DATE", "Selecione o período:",
                                        start = 
                                          as.character(format(as.Date(min(saude_bucal_escovacoes$data))),"dd/mm/yyyy"), # Start 
@@ -72,7 +78,10 @@ ui <- fluidPage(
                                          as.character(format(as.Date(max(saude_bucal_escovacoes$data))),"dd/mm/yyyy"),
                                        format = "dd/mm/yyyy",
                                        language = "pt-BR",
-                                       separator = " até ")))),
+                                       separator = " até ")),
+              column(8, selectInput(inputId = "UBS", label = "Selecione UBS", choices = lista_UBS, multiple = T, selected = lista_UBS))
+                    )
+            ),
   
   
   # bloco de totais/médias
@@ -100,10 +109,11 @@ ui <- fluidPage(
   
   # bloco de gráficos
   fluidRow(
-    column(8, wellPanel(style = "background: white", "Escovações Supervisionadas", plotlyOutput("BAR"))),
+    column(8, wellPanel(style = "background: white", "Escovações Supervisionadas", plotOutput("BAR"))),
     column(4, wellPanel(style = "background: white", "Distribuição por sexo e faixa etária", plotlyOutput("PYR")))
   )
 )
+
 
 
 
@@ -165,21 +175,35 @@ server <- function(input, output){
   ### GRÁFICOS
   
   # gráfico de barras 
-  output$BAR <- renderPlotly({
-    bp <- ggplot(sb_escovacoes_filtrada(),aes(x=nome_unidade_saude)) +
+  output$BAR <- renderPlot({
+    
+    ggplot(sb_escovacoes_filtrada() ,aes(x = nome_unidade_saude))  +
       geom_bar(fill = "#01B8AA") +
       scale_y_log10() +
-      #geom_text(aes(label = ..count..), stat = "count", colour = "black") +
+      geom_text(aes(label = ..count..), stat = "count", colour = "white", vjust= 1.7, size = 6) +
       theme(panel.background = element_blank(),
             panel.grid.minor = element_blank(),
             panel.grid.major = element_blank(),
             panel.grid.major.y = element_line(colour = "gray"),
-            #text = element_text(color = "gray"),
+            text = element_text(size = 15),
+            axis.text.x = element_text(size = 15),
             #axis.line = element_line(colour = "gray")
-            ) +
-      scale_x_discrete(labels = wrap_format(10)) +
-      labs(x = "", y ="Número de atividades coletivas", colour = "gray")
-    ggplotly(bp, tooltip = c("y", "x"))
+      ) +
+      scale_x_discrete(labels = wrap_format(20)) +
+      labs(x = "", y ="Número de atividades coletivas\n", colour = "gray")
+    
+#    font = list(
+#      color = "black"
+#    )
+    
+#    label = list(
+#      bgcolor = "white",
+#      bordercolor = "gray",
+#      font = font
+#    )
+    
+   # ggplotly(bp, tooltip = c("text")) %>%
+  #    style(hoverlabel = label)
   })
   
   
@@ -203,14 +227,28 @@ server <- function(input, output){
       theme(panel.background = element_blank(),
             panel.grid.minor = element_blank(),
             panel.grid.major = element_blank(),
+            text = element_text(size = 12),
             #axis.line = element_line(colour = "gray"),
             legend.position = "bottom", legend.title = element_blank()) +
       labs(x = "", y ="", colour = "nome_sexo")
-    ggplotly(pp, tooltip = "text") %>%
-      layout(legend = list(orientation = "h", x = 0.4, y = -0.2))
+    
+    font = list(
+      color = "black"
+    )
+    
+    label = list(
+      bgcolor = "white",
+      bordercolor = "gray",
+      font = font
+    )
+    
+    ggplotly(pp, tooltip = c("text")) %>%
+      layout(legend = list(orientation = "h", x = 0.4, y = -0.2)) %>%
+      style(hoverlabel = label) %>%
+      config(displayModeBar = FALSE)
     
   })
-
+  
 } 
 
 
